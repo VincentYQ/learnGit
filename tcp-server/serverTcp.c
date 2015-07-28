@@ -20,7 +20,7 @@ int main(int argc,char *argv[])
 	
 	if((myfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		perror("socket() error!");
+		perror("server socket() error!");
 		exit(1);
 	}
 
@@ -30,30 +30,41 @@ int main(int argc,char *argv[])
 
 	if(bind(myfd, (struct sockaddr *)&myaddr, sizeof(struct sockaddr)) == -1)
 	{
-		perror("bind() error!");
+		perror("server bind() error!");
 		exit(1);
 	}
 
 	if(listen(myfd, 10) == -1)
-	{
-		perror("listen() error!");
+	{	
+		perror("server listen() error!");
 		exit(1);
 	}
+
 	int count = 0;
 	while(1)
 	{
+
 		struct sockaddr_in addrClient;
 		sinsize = sizeof(struct sockaddr_in);
 		if((ClinetConn = accept(myfd,(struct sockaddr *)&addrClient, &sinsize)) == -1)
 		{
-			perror("accept() error!");
+			perror("server accept() error!");
 			exit(1);
 		}
 		char sendMessage[100];
 		memset(sendMessage,0,sizeof(sendMessage));
 		sprintf(sendMessage, "%d:%s",++count, "hello word");
 		
-		write(ClinetConn, sendMessage,sizeof(sendMessage));
+		int sizeWrite,messaSize;
+		messaSize = sizeof(sendMessage);
+		sizeWrite = write(ClinetConn, sendMessage,messaSize);
+		if(sizeWrite != messaSize)
+		{
+			perror("server write() error");
+			exit(1);
+		}		
+
+		close(ClinetConn);
 	}
 
 	close(myfd);

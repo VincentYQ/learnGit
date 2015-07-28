@@ -41,9 +41,11 @@ int main(int argc,char *argv[])
 	}
 
 	int count = 0;
+	char sendMessage[100];
+	memset(sendMessage,0,sizeof(sendMessage));
+
 	while(1)
 	{
-
 		struct sockaddr_in addrClient;
 		sinsize = sizeof(struct sockaddr_in);
 		if((ClinetConn = accept(myfd,(struct sockaddr *)&addrClient, &sinsize)) == -1)
@@ -51,9 +53,8 @@ int main(int argc,char *argv[])
 			perror("server accept() error!");
 			exit(1);
 		}
-		char sendMessage[100];
-		memset(sendMessage,0,sizeof(sendMessage));
-		sprintf(sendMessage, "%d:%s",++count, "hello word");
+
+		sprintf(sendMessage, "%d:%s",++count, "hello word!");
 		
 		int sizeWrite,messaSize;
 		messaSize = sizeof(sendMessage);

@@ -52,12 +52,8 @@ int main(int argc,char *argv[])
 		char sendMessage[100];
 		memset(sendMessage,0,sizeof(sendMessage));
 		sprintf(sendMessage, "%d:%s",++count, "hello word");
-
-		if(send(ClinetConn, sendMessage, strlen(sendMessage),0) == -1)
-		{
-			perror("send() error!");
-			exit(1);
-		}
+		
+		write(ClinetConn, sendMessage,sizeof(sendMessage));
 	}
 
 	close(myfd);

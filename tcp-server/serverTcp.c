@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "conf.h"
-#include "ini.h"
 
 #define BUFFSIZE 1024
 
@@ -21,14 +20,19 @@ void mySocket(const int,char *,int *);
 int main(int argc,char *argv[])
 {
    	int myfd;
-	unsigned int myport;
+	int myport;
 	int buffLen = 0;
 	char * readBuff = NULL;
-	struct sockaddr_in myaddr;
-	
-	conf_init();
-	myport = global_settings.port;
+    struct sockaddr_in myaddr;
 
+    configuration *conf = config_new();
+    config_init(conf);
+
+    if (argc < 2 || (myport = atoi(argv[1])) < 1) {
+        if (!config_get_int(conf, "http", "listen", &myport)) {
+            myport = 80;
+        }
+    }
 //	printf("port :%d\n",myport);
 
 	if((myfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)

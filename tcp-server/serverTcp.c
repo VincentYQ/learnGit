@@ -60,7 +60,7 @@ int main(int argc,char *argv[])
 	while(1)
 	{
 		mySocket(myfd,&readBuff,&buffLen);
-		printf("\nreadBuff:\n%s\nbuffLen:\n%d\n",readBuff,buffLen);
+		printf("\nreadBuff:\n%s\n buffLen:\n%d\n",readBuff,buffLen);
 	}
 	
 	free(readBuff);
@@ -80,34 +80,25 @@ void mySocket(int myfd, char ** readBuff, int * bufLen)
 		exit(1);
 	}
 	readFromClient(ClientConn,readBuff,bufLen);
+
+	write(ClientConn,*readBuff,*bufLen);
+
 	close(ClientConn);
 	return;
 }
 void readFromClient(int ClientConn,char ** readBuff,int *bufLen)
 {
 	char buf[BUFFSIZE];
-	int len;
 	*readBuff = (char *)calloc(BUFFSIZE,sizeof(char));
 	if(*readBuff == NULL)
 	{
 		perror("server readFromClient() calloc() error");
 		exit(1);
 	}
-	while((len = read(ClientConn,buf,BUFFSIZE))>0)
-	{
-		*bufLen += len;
-		if(*bufLen > BUFFSIZE)
-		{
-			*readBuff = (char*)realloc(*readBuff,*bufLen+10);
-			if(*readBuff == NULL)
-			{
-				perror("server readFromClient realloc() error");
-				exit(1);
-			}
-		}
-		strcat(*readBuff,buf);
-	}
-	if(len == -1)
+	*bufLen = read(ClientConn,buf,BUFFSIZE);
+	strcat(*readBuff,buf);
+	
+	if(*bufLen == -1)
 	{
 		perror("readFromClient read() error");
 		exit(1);

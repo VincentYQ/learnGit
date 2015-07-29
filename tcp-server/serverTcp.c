@@ -9,7 +9,7 @@
 #include <string.h>
 #include "conf.h"
 
-#define BUFFSIZE 1024
+#define BUFFSIZE 65535 
 
 void  readFromClient(const int ,char **,int *);
 //读取客户端发来的信息保存到char *中，长度为int *
@@ -26,7 +26,7 @@ int main(int argc,char *argv[])
 	struct sockaddr_in myaddr;
 	
     configuration *conf = config_new();
-    config_init(conf);
+    config_init(conf);//相当于config_load("conf.ini");
 
     if (argc < 2 || (myport = atoi(argv[1])) < 1) {
         if (!config_get_int(conf, "http", "listen", &myport)) {
@@ -60,9 +60,10 @@ int main(int argc,char *argv[])
 	while(1)
 	{
 		mySocket(myfd,&readBuff,&buffLen);
-		printf("readBuff:%s\n buffLen:%d\n",readBuff,buffLen);
+		printf("\nreadBuff:\n%s\nbuffLen:\n%d\n",readBuff,buffLen);
 	}
-
+	
+	free(readBuff);
 	close(myfd);
 	return 0;
 }
@@ -97,7 +98,7 @@ void readFromClient(int ClientConn,char ** readBuff,int *bufLen)
 		*bufLen += len;
 		if(*bufLen > BUFFSIZE)
 		{
-			*readBuff = (char*)realloc(*readBuff,*bufLen);
+			*readBuff = (char*)realloc(*readBuff,*bufLen+10);
 			if(*readBuff == NULL)
 			{
 				perror("server readFromClient realloc() error");

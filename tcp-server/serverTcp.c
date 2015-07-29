@@ -95,13 +95,16 @@ void readFromClient(int ClientConn,char ** readBuff,int *bufLen)
 		perror("server readFromClient() calloc() error");
 		exit(1);
 	}
+
 	*bufLen = read(ClientConn,buf,BUFFSIZE);
-	strcat(*readBuff,buf);
 	
 	if(*bufLen == -1)
 	{
 		perror("readFromClient read() error");
 		exit(1);
 	}
+
+	strcat(*readBuff,buf);
+
 	return;
 }

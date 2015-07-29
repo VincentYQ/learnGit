@@ -7,17 +7,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "conf.h"
+#include "ini.h"
 
-#define MYPORT 8080
+#define BUFFSIZE 1024
+
+void  readFromClient(const int ,char *,int * len);
+//读取客户端发来的信息保存到char *中，长度为len
+
+void mySocket(const int,char *,int *);
+//服务端和客户端建立连接
 
 int main(int argc,char *argv[])
 {
-	int myfd;
-	int ClinetConn;
-	unsigned int myport = MYPORT;
-	unsigned int sinsize;
+   	int myfd;
+	unsigned int myport;
+	int buffLen = 0;
+	char * readBuff = NULL;
 	struct sockaddr_in myaddr;
 	
+	conf_init();
+	myport = global_settings.port;
+
+//	printf("port :%d\n",myport);
+
 	if((myfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
 		perror("server socket() error!");
@@ -40,34 +53,48 @@ int main(int argc,char *argv[])
 		exit(1);
 	}
 
-	int count = 0;
-	char sendMessage[100];
-	memset(sendMessage,0,sizeof(sendMessage));
-
 	while(1)
 	{
-		struct sockaddr_in addrClient;
-		sinsize = sizeof(struct sockaddr_in);
-		if((ClinetConn = accept(myfd,(struct sockaddr *)&addrClient, &sinsize)) == -1)
-		{
-			perror("server accept() error!");
-			exit(1);
-		}
-
-		sprintf(sendMessage, "%d:%s",++count, "hello word!");
-		
-		int sizeWrite,messaSize;
-		messaSize = sizeof(sendMessage);
-		sizeWrite = write(ClinetConn, sendMessage,messaSize);
-		if(sizeWrite != messaSize)
-		{
-			perror("server write() error");
-			exit(1);
-		}		
-
-		close(ClinetConn);
+		mySocket(myfd,readBuff,&buffLen);
+		printf("readBuff:%s\n buffLen:%d\n",readBuff,buffLen);
 	}
 
 	close(myfd);
 	return 0;
+}
+
+void mySocket(int myfd, char * readBuff, int * bufLen)
+{
+	int ClientConn;
+	unsigned int sinsize;
+	struct sockaddr_in addrClient;
+	sinsize = sizeof(struct sockaddr_in);
+	if((ClientConn = accept(myfd,(struct sockaddr *)&addrClient, &sinsize)) == -1)
+	{
+		perror("server accept() error!");
+		exit(1);
+	}
+	readFromClient(ClientConn,readBuff,bufLen);
+	close(ClientConn);
+}
+void readFromClient(int ClientConn,char * readBuff,int *bufLen)
+{
+	char buf[BUFFSIZE];
+	int len;
+	while((len = read(ClientConn,buf,BUFFSIZE))>0)
+	{
+		*bufLen += len;
+		readBuff = realloc(readBuff,*bufLen);
+		if(readBuff == NULL)
+		{
+			perror("realloc() error");
+			exit(1);
+		}
+		strcat(readBuff,buf);
+	}
+	if(len == -1)
+	{
+		perror("readFromClient read() error");
+		exit(1);
+	}
 }

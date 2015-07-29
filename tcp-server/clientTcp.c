@@ -7,15 +7,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define BUFFsize 1024
 #define MYPORT 8080
 
 int main(int argc, char *argv[])
 {
 	int clinPort = MYPORT;
 	int clinFd;
-	char buf[1000];
+	char * buf = NULL;
 	struct sockaddr_in clinaddr;
-	memset(buf,0,sizeof(buf));
 	
 	if((clinFd = socket(AF_INET, SOCK_STREAM,0)) == -1)
 	{
@@ -32,16 +32,34 @@ int main(int argc, char *argv[])
 		perror("client connect() error!");
 		exit(1);
 	}
-	int len;
-
-	len = recv(clinFd, buf,sizeof(buf),0);
-	if(len <= 0)
+	int len,buflen;
+	len = buflen = 0;
+	char tempBuff[BUFFsize];
+	while((len = read(STDIN_FILENO,tempBuff,BUFFsize) > 0))
 	{
-		perror("client recv() error!");
+		buflen += len;
+		buf = realloc(buf,buflen);
+		if(buf == NULL)
+		{
+			perror("client realloc() error");
+			exit(1);
+		}
+		strcat(buf,tempBuff);
+	}
+	if(len == -1)
+	{
+		perror("client read() error");
 		exit(1);
 	}
-
-	printf("%s\n",buf);
+	len = 0;
+	len = write(clinFd,buf,buflen);
+	if(len != buflen)
+	{
+		perror("client write() error");
+		exit(1);
+	}
+	
+	//printf("%s\n",buf);
 
 	close(clinFd);
 

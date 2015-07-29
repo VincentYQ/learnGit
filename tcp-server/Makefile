@@ -1,6 +1,6 @@
 all:serverTcp
 
-serverTcp:serverTcp.o conf.o ini.o
+serverTcp:serverTcp.o conf.o ini.o map.o
 	gcc -Wall -g -o $@ $^
 
 serverTcp.o:serverTcp.c

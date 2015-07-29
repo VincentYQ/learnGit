@@ -8,14 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "conf.h"
-#include "ini.h"
 
-#define BUFFSIZE 1024
+#define BUFFSIZE 100
 
-void  readFromClient(const int ,char *,int * len);
-//读取客户端发来的信息保存到char *中，长度为len
+void  readFromClient(const int ,char **,int *);
+//读取客户端发来的信息保存到char *中，长度为int *
 
-void mySocket(const int,char *,int *);
+void mySocket(const int,char **,int *);
 //服务端和客户端建立连接
 
 int main(int argc,char *argv[])
@@ -26,9 +25,14 @@ int main(int argc,char *argv[])
 	char * readBuff = NULL;
 	struct sockaddr_in myaddr;
 	
-	conf_init();
-	myport = global_settings.port;
-
+	configuration *conf = config_new();
+	conf_init(conf);
+	
+	if(argc < 2 || (myport = atoi(argv[1])) < 1){
+		if(!config_get_int(conf,"http","listen",&myport)){
+			myport = 80;
+		}
+	}
 //	printf("port :%d\n",myport);
 
 	if((myfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -55,7 +59,7 @@ int main(int argc,char *argv[])
 
 	while(1)
 	{
-		mySocket(myfd,readBuff,&buffLen);
+		mySocket(myfd,&readBuff,&buffLen);
 		printf("readBuff:%s\n buffLen:%d\n",readBuff,buffLen);
 	}
 
@@ -63,7 +67,7 @@ int main(int argc,char *argv[])
 	return 0;
 }
 
-void mySocket(int myfd, char * readBuff, int * bufLen)
+void mySocket(int myfd, char ** readBuff, int * bufLen)
 {
 	int ClientConn;
 	unsigned int sinsize;
@@ -76,25 +80,36 @@ void mySocket(int myfd, char * readBuff, int * bufLen)
 	}
 	readFromClient(ClientConn,readBuff,bufLen);
 	close(ClientConn);
+	return;
 }
-void readFromClient(int ClientConn,char * readBuff,int *bufLen)
+void readFromClient(int ClientConn,char ** readBuff,int *bufLen)
 {
 	char buf[BUFFSIZE];
 	int len;
+	*readBuff = (char *)calloc(BUFFSIZE,sizeof(char));
+	if(*readBuff == NULL)
+	{
+		perror("server readFromClient() calloc() error");
+		exit(1);
+	}
 	while((len = read(ClientConn,buf,BUFFSIZE))>0)
 	{
 		*bufLen += len;
-		readBuff = realloc(readBuff,*bufLen);
-		if(readBuff == NULL)
+		if(*bufLen > BUFFSIZE)
 		{
-			perror("realloc() error");
-			exit(1);
+			*readBuff = (char*)realloc(*readBuff,*bufLen);
+			if(*readBuff == NULL)
+			{
+				perror("server readFromClient realloc() error");
+				exit(1);
+			}
 		}
-		strcat(readBuff,buf);
+		strcat(*readBuff,buf);
 	}
 	if(len == -1)
 	{
 		perror("readFromClient read() error");
 		exit(1);
 	}
+	return;
 }
